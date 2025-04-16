@@ -2,6 +2,27 @@
 
 A web scraper application with Docker-based PostgreSQL database and JWT authentication.
 
+## Project Structure
+
+```
+.
+├── src/                    # Source code
+│   ├── controllers/       # Route controllers
+│   ├── middlewares/       # Express middlewares
+│   ├── routes/           # API routes
+│   ├── utils/            # Utility functions
+│   ├── validations/      # Request validation schemas
+│   ├── config/           # Configuration files
+│   └── prisma/           # Database schema and migrations
+├── dist/                  # Compiled JavaScript files
+├── prisma/                # Prisma ORM files
+├── .env                   # Environment variables
+├── .env.example          # Example environment variables
+├── docker-compose.yml     # Docker configuration
+├── package.json          # Project dependencies
+└── tsconfig.json         # TypeScript configuration
+```
+
 ## Prerequisites
 
 - Node.js (v16+)
@@ -14,7 +35,7 @@ A web scraper application with Docker-based PostgreSQL database and JWT authenti
 
 ```bash
 git clone <repository-url>
-cd web-scraper-01
+cd AI-web-scraper
 ```
 
 2. **Install dependencies**
@@ -50,17 +71,30 @@ npm run dev
 ### Authentication
 
 - `POST /api/auth/register` - Register a new user
+  - Request body: `{ email: string, password: string }`
 - `POST /api/auth/login` - Login and get JWT token
+  - Request body: `{ email: string, password: string }`
 
 ### Scraping
 
 - `POST /api/scrape` - Scrape a URL
-- `GET /api/scrape` - Get all scraped URLs
+  - Request body: `{ url: string }`
+  - Requires authentication
+- `GET /api/scrape` - Get all scraped URLs with pagination and search
+  - Query parameters: 
+    - `title` (optional): Filter by title
+    - `url` (optional): Filter by URL
+    - `page` (optional): Page number (default: 1)
+    - `limit` (optional): Items per page (default: 10, max: 100)
+  - Requires authentication
 - `DELETE /api/scrape/:id` - Delete a scraped URL
+  - Requires authentication
 
 ### Search
 
-- `POST /api/search` - Search through scraped content
+- `POST /api/search` - Perform semantic search on scraped content
+  - Request body: `{ query: string }`
+  - Requires authentication
 
 ## Docker Commands
 
