@@ -95,6 +95,24 @@ npm run dev
 - `POST /api/search` - Perform semantic search on scraped content
   - Request body: `{ query: string }`
   - Requires authentication
+  - Uses Google's Gemini AI to enhance search terms
+  - Searches through scraped content in title and URL fields
+  - Response format:
+    ```json
+    {
+      "status": "success",
+      "data": [
+        {
+          "id": "string",
+          "userId": "string",
+          "url": "string",
+          "title": "string",
+          "cleanData": "object",
+          "createdAt": "date"
+        }
+      ]
+    }
+    ```
 
 ## Docker Commands
 
