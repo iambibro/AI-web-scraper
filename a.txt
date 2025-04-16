@@ -1,0 +1,146 @@
+API Documentation
+================
+
+1. Authentication Endpoints
+-------------------------
+
+a) Register User
+- Endpoint: POST /api/auth/register
+- Request Body:
+  {
+    "email": "user@example.com",
+    "password": "password123",
+    "name": "User Name"
+  }
+- Response (200):
+  {
+    "success": true,
+    "data": {
+      "id": "user_id",
+      "email": "user@example.com",
+      "name": "User Name"
+    }
+  }
+
+b) Login
+- Endpoint: POST /api/auth/login
+- Request Body:
+  {
+    "email": "user@example.com",
+    "password": "password123"
+  }
+- Response (200):
+  {
+    "success": true,
+    "data": {
+      "token": "jwt_token",
+      "user": {
+        "id": "user_id",
+        "email": "user@example.com",
+        "name": "User Name"
+      }
+    }
+  }
+
+2. Scraping Endpoints
+--------------------
+
+a) Create Scrape
+- Endpoint: POST /api/scrape
+- Headers:
+  Authorization: Bearer jwt_token
+- Request Body:
+  {
+    "url": "https://example.com"
+  }
+- Response (200):
+  {
+    "success": true,
+    "data": {
+      "id": "scrape_id",
+      "url": "https://example.com",
+      "title": "Page Title",
+      "content": "Scraped content",
+      "createdAt": "2024-04-16T14:00:00Z"
+    }
+  }
+
+b) Get All Scrapes
+- Endpoint: GET /api/scrape
+- Headers:
+  Authorization: Bearer jwt_token
+- Query Parameters:
+  - page (optional, default: 1)
+  - limit (optional, default: 10)
+  - title (optional) - search by title
+  - url (optional) - search by URL
+- Response (200):
+  {
+    "success": true,
+    "data": {
+      "scrapes": [
+        {
+          "id": "scrape_id",
+          "url": "https://example.com",
+          "title": "Page Title",
+          "content": "Scraped content",
+          "createdAt": "2024-04-16T14:00:00Z"
+        }
+      ],
+      "pagination": {
+        "total": 1,
+        "page": 1,
+        "limit": 10
+      }
+    }
+  }
+
+c) Delete Scrape
+- Endpoint: DELETE /api/scrape/:id
+- Headers:
+  Authorization: Bearer jwt_token
+- Response (200):
+  {
+    "success": true,
+    "message": "Scrape deleted successfully"
+  }
+
+3. Error Responses
+-----------------
+
+All endpoints may return the following error responses:
+
+400 Bad Request:
+{
+  "success": false,
+  "error": "Validation error",
+  "details": ["Error message 1", "Error message 2"]
+}
+
+401 Unauthorized:
+{
+  "success": false,
+  "error": "Unauthorized",
+  "message": "Invalid or missing token"
+}
+
+404 Not Found:
+{
+  "success": false,
+  "error": "Not Found",
+  "message": "Resource not found"
+}
+
+500 Internal Server Error:
+{
+  "success": false,
+  "error": "Internal Server Error",
+  "message": "An unexpected error occurred"
+}
+
+4. Notes
+--------
+- All scraping endpoints require authentication
+- JWT token must be included in the Authorization header
+- API documentation is also available at /api-docs
+- Server runs on port 3000 

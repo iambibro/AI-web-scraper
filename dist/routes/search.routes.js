@@ -1,0 +1,12 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.searchRoutes = void 0;
+const express_1 = require("express");
+const search_controller_1 = require("../controllers/search.controller");
+const auth_middleware_1 = require("../middlewares/auth.middleware");
+const validate_middleware_1 = require("../middlewares/validate.middleware");
+const search_validation_1 = require("../validations/search.validation");
+const router = (0, express_1.Router)();
+router.use(auth_middleware_1.authMiddleware);
+router.post('/', (0, validate_middleware_1.validate)(search_validation_1.searchSchema), search_controller_1.searchController.search);
+exports.searchRoutes = router;
