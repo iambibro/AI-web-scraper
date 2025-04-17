@@ -24,16 +24,18 @@ model User {
 }
 
 model Scrape {
-  id        String   @id @default(uuid())
-  userId    String
-  url       String
-  title     String
-  cleanData Json
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  user      User     @relation(fields: [userId], references: [id])
+  id          String   @id @default(uuid())
+  userId      String
+  url         String
+  title       String
+  cleanData   Json
+  embedding   Float[]  @db.Vector(384)  // Vector embedding for semantic search
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id])
 
   @@unique([userId, url])
   @@index([title])
   @@index([url])
+  @@index([embedding], type: "ivfflat", lists: 100)  // Index for vector similarity search
 }

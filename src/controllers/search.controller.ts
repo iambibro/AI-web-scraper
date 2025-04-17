@@ -1,7 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { PrismaClient } from '@prisma/client';
-import { AppError } from '../middlewares/errorHandler';
+import { AppError } from '../utils/appError';
+import { EmbeddingService } from '../services/embeddingService';
 
 const prisma = new PrismaClient();
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY as string);
@@ -12,60 +13,52 @@ export const searchController = {
       const { query } = req.body;
       const userId = req.user?.userId;
 
+      console.log('Search request received:', { query, userId });
+
       if (!userId) {
-        throw new AppError(401, 'User not authenticated');
+        throw new AppError('User not authenticated', 401);
       }
 
-      let searchTerms = query;
-
-      try {
-        // Attempt to use Gemini to enhance the search query
-        const model = genAI.getGenerativeModel({ model: 'gemini-1.0-pro' });
-        const prompt = `Extract key search terms from: ${query}`;
-        const result = await model.generateContent(prompt);
-        const enhancedTerms = await result.response.text();
-        if (enhancedTerms) {
-          searchTerms = enhancedTerms;
-        }
-      } catch (aiError) {
-        console.log('AI enhancement failed, using original query:', aiError);
-        // Continue with original search terms
+      if (!query) {
+        throw new AppError('Search query is required', 400);
       }
 
-      // Perform text search using PostgreSQL
-      const searchResults = await prisma.scrape.findMany({
-        where: {
-          userId,
-          OR: [
-            {
-              title: {
-                contains: searchTerms,
-                mode: 'insensitive',
-              },
-            },
-            {
-              url: {
-                contains: searchTerms,
-                mode: 'insensitive',
-              },
-            },
-          ],
-        },
-        orderBy: {
-          createdAt: 'desc',
-        },
-      });
+      // Generate embedding for the search query
+      const embeddingService = await EmbeddingService.getInstance();
+      const queryEmbedding = await embeddingService.generateEmbedding(query);
+
+      // Perform vector similarity search
+      const searchResults = await prisma.$queryRaw`
+        SELECT 
+          id,
+          title,
+          url,
+          clean_data,
+          created_at,
+          embedding <=> ${queryEmbedding}::vector as similarity
+        FROM "Scrape"
+        WHERE user_id = ${userId}
+        ORDER BY embedding <=> ${queryEmbedding}::vector
+        LIMIT 10
+      `;
+
+      console.log('Search results:', searchResults);
 
       res.json({
         status: 'success',
         data: {
           query: query,
-          searchTerms: searchTerms,
           results: searchResults,
         },
       });
     } catch (error) {
       console.error('Search error:', error);
+      if (error instanceof Error) {
+        console.error('Error details:', {
+          message: error.message,
+          stack: error.stack,
+        });
+      }
       next(error);
     }
   },

@@ -3,6 +3,7 @@ import { prisma } from '../utils/prisma';
 import { AppError } from '../utils/appError';
 import puppeteer from 'puppeteer';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { EmbeddingService } from '../services/embeddingService';
 
 interface AuthenticatedRequest extends Request {
   user?: {
@@ -39,7 +40,7 @@ export const scrape = async (req: AuthenticatedRequest, res: Response) => {
 
     // Initialize Gemini AI
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.0-pro' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
 
     let cleanData;
     try {
@@ -60,6 +61,12 @@ export const scrape = async (req: AuthenticatedRequest, res: Response) => {
       };
     }
 
+    // Generate embedding for semantic search
+    const embeddingService = await EmbeddingService.getInstance();
+    const embedding = await embeddingService.generateEmbedding(
+      `${title} ${cleanData.processedContent || cleanData.rawContent}`
+    );
+
     // Store in database
     const scrape = await prisma.scrape.create({
       data: {
@@ -67,6 +74,7 @@ export const scrape = async (req: AuthenticatedRequest, res: Response) => {
         url,
         title,
         cleanData,
+        embedding,
       },
     });
 
